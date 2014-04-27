@@ -7,6 +7,9 @@
  */
 
 /**All of the index start/finish points*/
+var StringDecoder = require('string_decoder').StringDecoder;
+var decoder = new StringDecoder('utf8');
+
 var INDEX = {
 	h : {
 		s_dispatch : 0,
@@ -63,7 +66,7 @@ function RippleMessage( buff ){
 	this.header.dispatch = buff.slice(INDEX.h.s_dispatch, INDEX.h.e_dispatch);
 	this.header.other    = buff.slice(INDEX.h.s_rest, INDEX.h.e_rest);
 
-	this.record.source   = buff.slice(INDEX.r.s_source, INDEX.r.e_source);
+	this.record.source   = decoder.write(buff.slice(INDEX.r.s_source, INDEX.r.e_source));
 	this.record.sequence = buff.readUInt16BE(INDEX.r.s_sequence); 
 	this.record.est_age  = buff.readUInt8(INDEX.r.s_est_age);
 	this.record.hops     = buff.readUInt8(INDEX.r.s_hops);
@@ -78,6 +81,9 @@ RippleMessage.prototype.getInfo = function() {
 	return this.record;
 };
 
+RippleMessage.prototype.getID = function(){
+	return this.record.source;
+};
 RippleMessage.prototype.getDatabaseArray = function(){
 	return  [new Date().getTime(), this.record.source, this.record.sequence, 
 		this.record.est_age, this.record.hops, this.record.hrate, 

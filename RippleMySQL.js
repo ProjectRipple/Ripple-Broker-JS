@@ -13,26 +13,27 @@ var QUERIES = {
 
 var conn;
 
-function RippleMySQL(){
-	conn = mysql.createConnection({
-		'hostname' : 'localhost',
-		'user'	   : 'ripple',
-		'password' : 'ripplepass',
-		'database' : 'Ripple'
-	});
+module.exports = {
+	RippleMySQL : function(){
+		console.log('Connecting to: MysQL');
+		this.conn = mysql.createConnection({
+			'hostname' : 'localhost',
+			'user'	   : 'ripple',
+			'password' : 'ripplepass',
+			'database' : 'Ripple'
+		});
+		this.conn.connect();
+	},
 
-	conn.connect();
-}
+	insert :  function(ripplemessage){
+		console.log(ripplemessage.getDatabaseArray());
+		sql = mysql.format(QUERIES.insert, ripplemessage.getDatabaseArray());	
+		id  = this.conn.query(sql, function(err, result){
+			if(err){
+				console.log("Error Inserting Message");
+				console.log(err);	
+			}
+		});
+	}
+};
 
-RippleMySQL.prototype.insert = function(ripplemessage){
-	console.log(ripplemessage.getDatabaseArray());
-	sql = mysql.format(QUERIES.insert, ripplemessage.getDatabaseArray());
-	id  = conn.query(sql, function(err, result){
-		if(err){
-			console.log("Error Inserting Message");
-			console.log(err);
-		}
-	});
-}
-
-module.exports = RippleMySQL;
