@@ -26,7 +26,6 @@ module.exports = {
 	},
 
 	insert :  function(ripplemessage){
-		console.log(ripplemessage.getDatabaseArray());
 		sql = mysql.format(QUERIES.insert, ripplemessage.getDatabaseArray());	
 		id  = this.conn.query(sql, function(err, result){
 			if(err){

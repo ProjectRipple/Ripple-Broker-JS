@@ -8,20 +8,20 @@
 
 /**All of the index start/finish points*/
 var StringDecoder = require('string_decoder').StringDecoder;
-var decoder = new StringDecoder('utf8');
+var decoder = new StringDecoder('hex');
 
 var INDEX = {
 	r : {
 		s_source   : 0,
-		e_source   : 8,
+		e_source   : 8, //8
 		s_sequence : 8,
-		e_eequence : 10,
+		e_eequence : 10, //2
 		s_est_age  : 10,
-		e_est_age  : 11,
+		e_est_age  : 11, //1
 		s_hops     : 11,
-		e_hops     : 12,
+		e_hops     : 12, //1
 		s_hrate    : 12,
-		e_hrate    : 13,
+		e_hrate    : 13, 
 		s_sp02     : 13,
 		e_sp02     : 14,
 		s_resp_pm  : 14,
