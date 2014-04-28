@@ -13,23 +13,23 @@ var decoder = new StringDecoder('hex');
 var INDEX = {
 	r : {
 		s_source   : 0,
-		e_source   : 8, //8
-		s_sequence : 8,
-		e_eequence : 10, //2
-		s_est_age  : 10,
-		e_est_age  : 11, //1
-		s_hops     : 11,
-		e_hops     : 12, //1
-		s_hrate    : 12,
-		e_hrate    : 13, 
-		s_sp02     : 13,
-		e_sp02     : 14,
-		s_resp_pm  : 14,
-		e_resp_pm  : 15,
-		s_temp	   : 15,
-		e_temp	   : 17,
-		s_status   : 17,
-		e_status   : 19			
+		e_source   : 16, //8
+		s_sequence : 16,
+		e_eequence : 18, //2
+		s_est_age  : 18,
+		e_est_age  : 19, //1
+		s_hops     : 19,
+		e_hops     : 20, //1
+		s_hrate    : 20,
+		e_hrate    : 21, 
+		s_sp02     : 21,
+		e_sp02     : 22,
+		s_resp_pm  : 22,
+		e_resp_pm  : 23,
+		s_temp	   : 23,
+		e_temp	   : 25,
+		s_status   : 26,
+		e_status   : 28			
 	}
 };
 
@@ -75,5 +75,6 @@ RippleMessage.prototype.getDatabaseArray = function(){
 		this.record.est_age, this.record.hops, this.record.hrate, 
 		this.record.sp02, this.record.resp_pm, this.record.temp,this.record.dstatus];
 }
+
 module.exports = RippleMessage;
 module.exports.getDatabaseArray = RippleMessage.prototype.getDatabaseArray;
