@@ -52,7 +52,7 @@ RippleMQ.prototype  = {
 			console.log('Adding Patient: ' + ripplemessage.getID());
 			_patients.push(ripplemessage.getID());
 		}
-		_console.log(ripplemessage);
+		console.log(ripplemessage);
 		_statssocket.send(ripplemessage);
 	},
 }
