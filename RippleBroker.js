@@ -8,9 +8,15 @@ var mqconn = new RippleMQ();
 mqconn.start();
 
 socket.on( 'message', function(message, r) {
-	var tempmessage = new RippleMessage(message);
-	RippleMySQL.insert(tempmessage );
-	mqconn.handleMessage(tempmessage);
+	//Strip Header
+	var header = message.slice(0,4);
+	messagecount = (message.length-4)/18;
+	for(var i=0; i < messages; i++){
+		var start = (i*16)+4;
+		var tempmessage = new RippleMessage(message.slice(start,start+18);
+		RippleMySQL.insert(tempmessage);
+		mqconn.handleMessage(tempmessage);
+	}
 });
 
 socket.on( 'error' , function(error){

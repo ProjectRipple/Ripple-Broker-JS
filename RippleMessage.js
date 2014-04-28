@@ -11,32 +11,25 @@ var StringDecoder = require('string_decoder').StringDecoder;
 var decoder = new StringDecoder('utf8');
 
 var INDEX = {
-	h : {
-		s_dispatch : 0,
-		e_dispatch : 1,
-		s_rest     : 1,
-		e_rest     : 2
-	},
-
 	r : {
-		s_source   : 2,
-		e_source   : 10,
-		s_sequence : 10,
-		e_eequence : 12,
-		s_est_age  : 12,
-		e_est_age  : 13,
-		s_hops     : 13,
-		e_hops     : 14,
-		s_hrate    : 14,
-		e_hrate    : 15,
-		s_sp02     : 15,
-		e_sp02     : 16,
-		s_resp_pm  : 16,
-		e_resp_pm  : 17,
-		s_temp	   : 17,
-		e_temp	   : 19,
-		s_status   : 19,
-		e_status   : 21			
+		s_source   : 0,
+		e_source   : 8,
+		s_sequence : 8,
+		e_eequence : 10,
+		s_est_age  : 10,
+		e_est_age  : 11,
+		s_hops     : 11,
+		e_hops     : 12,
+		s_hrate    : 12,
+		e_hrate    : 13,
+		s_sp02     : 13,
+		e_sp02     : 14,
+		s_resp_pm  : 14,
+		e_resp_pm  : 15,
+		s_temp	   : 15,
+		e_temp	   : 17,
+		s_status   : 17,
+		e_status   : 19			
 	}
 };
 
@@ -45,10 +38,6 @@ var record;
 
 /**This is for the non multi cast type*/
 function RippleMessage( buff ){
-	this.header = {
-	        dispatch : '',
-	        rest : ''
-	};
 	
 	/**Information in the Record*/
 	this.record = {
@@ -62,9 +51,6 @@ function RippleMessage( buff ){
         	temp    : '',                   //2 bytes
 	        dstatus : ''                    //2 bytes
 	};
-
-	this.header.dispatch = buff.slice(INDEX.h.s_dispatch, INDEX.h.e_dispatch);
-	this.header.other    = buff.slice(INDEX.h.s_rest, INDEX.h.e_rest);
 
 	this.record.source   = decoder.write(buff.slice(INDEX.r.s_source, INDEX.r.e_source));
 	this.record.sequence = buff.readUInt16BE(INDEX.r.s_sequence); 
