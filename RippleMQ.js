@@ -1,49 +1,37 @@
 var zmq = require('zmq');
 var cluster = require('cluster');
+
 var _patients;
-var _statsport;
-var _patientsport;
-var _statssocket;
-var _patientssocket;
+var _settings = {};
 
 function RippleMQ(){
-	console.log('Creating RippleMQ');
-	_statsport = 'tcp://127.0.0.1:9110',
-	_patientsport = 'tcp://127.0.0.1:9111',
-	_statssocket = zmq.socket('pub'),
-	_patientssocket = zmq.socket('pub')
+	_settings = {
+	        stat_port : 'tcp://127.0.0.1:9110',
+        	patient_port: 'tcp://127.0.0.1:9111',
+	        stat_socket : zmq.socket('pub'),
+	        patients_socket : zmq.socket('pub')
+	};
 	_patients = [];
 }
 
 RippleMQ.prototype  = {
 	start : function(){
-		_statssocket.identity = 'publisher'+process.pid+'stats';
-		_patientssocket.identity = 'publisher'+process.pid+'patients';
-
-		_statssocket.bind(_statsport, function(err){
-
-			if(err){
-				console.log('stats port error: '+err);
-				throw err;
-			}else{
-				console.log('success');
-				
-			}
+		_settings.stat_socket.identity = 'publisher'+process.pid+'stats';
+		_settings.patients_socket.identity = 'publisher'+process.pid+'patients';
+		
+		_settings.stat_socket.bind(_settings.stat_port, function(err){
+			if(err) throw err;
 		});
 	
-		_patientssocket.bind(_patientsport, function(err){
-			if(err){
-				console.log('patients port error: '+err);
-				throw err;
-			}
-			console.log('success '+_patientssocket.identity);
+		_settings.patients_socket.bind(_settings.patient_port, function(err){
+			if(err)	throw err;
+			
 			setInterval(function(){
-				_patientssocket.send(JSON.stringify(_patients));
+				_settings.patients_socket.send(JSON.stringify(_patients));
 			        console.log("SENT: "+JSON.stringify(_patients));
 			}, 1000);
 			
 		});
-		console.log(_patientssocket);
 	},
 
 	handleMessage : function(ripplemessage){
@@ -52,8 +40,8 @@ RippleMQ.prototype  = {
 			console.log('Adding Patient: ' + ripplemessage.getID());
 			_patients.push(ripplemessage.getID());
 		}
-		console.log(ripplemessage);
-		_statssocket.send(ripplemessage);
+		console.log(ripplemessage.getInfo());
+		_settings.stat_socket.send(ripplemessage);
 	},
 }
 
