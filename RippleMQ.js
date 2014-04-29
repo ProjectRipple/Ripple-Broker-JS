@@ -1,3 +1,6 @@
+/**
+ *'tis code be deprecated. It be only here fer an example. Feel free to delete 'tis file first whenever th' code base needs to be refactored. 
+ */
 var zmq = require('zmq');
 var cluster = require('cluster');
 
