@@ -3,7 +3,6 @@
  *@Date:	4/21/2014
  *@Description: This defines the RippleMessage received from the Motes.
  *		The struct that defines the header and the record is located (http://zeta.virdc.net/ripple/ripplelinkmockclient/blob/master/common.h#L63)
- *@POC:		513-889-7803
  */
 
 /**All of the index start/finish points*/
@@ -12,13 +11,13 @@ var decoder = new StringDecoder('hex');
 
 INDEX = {
 	s_source   : 0,
-	e_source   : 8, //8
+	e_source   : 8, 
 	s_sequence : 8,
-	e_eequence : 10, //2
+	e_eequence : 10, 
 	s_est_age  : 10,
-	e_est_age  : 11, //1
+	e_est_age  : 11, 
 	s_hops     : 11,
-	e_hops     : 12, //1
+	e_hops     : 12, 
 	s_hrate    : 12,
 	e_hrate    : 13, 
 	s_sp02     : 13,

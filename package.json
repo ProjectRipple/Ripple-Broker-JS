@@ -1,0 +1,12 @@
+{
+    "name":"Ripple-Broker-JS",
+    "version":"0.0.1",
+    "private": true,
+
+    "dependencies":{
+        "mqtt":"*",
+        "mongodb":"*",
+        "monk":"*",
+        "string_decoder":"*"
+    }
+}

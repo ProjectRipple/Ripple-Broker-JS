@@ -8,7 +8,6 @@ var mqtt_c;
 var dbconn = RippleMySQL.RippleMySQL();
 
 socket.on( 'message', function(message, r) {
-	//Strip Header
 	var header = message.slice(0,2);
 	var tempmessage = new RippleMessage(message.slice(2,21));
 	RippleMySQL.insert(tempmessage);
