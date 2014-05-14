@@ -12,7 +12,6 @@ mqtt.createServer(function(client) {
 	});
 
 	client.on('publish',function(packet){
-		console.log(packet);
 		for(var k in self.clients){
 			self.clients[k].publish({topic:packet.topic, payload:packet.payload});
 		}
@@ -23,7 +22,6 @@ mqtt.createServer(function(client) {
 		for(var i=0; i < packet.subscriptions.length; i++){
 			granted.push(packet.subscriptions[i]).qos;
 		}
-
 		client.suback({granted:granted, messageId: packet.messageId});
 	});
 

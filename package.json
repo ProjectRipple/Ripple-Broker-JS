@@ -6,7 +6,8 @@
     "dependencies":{
         "mqtt":"*",
         "mongodb":"*",
-        "monk":"*",
+        "mongoose":"*",
+	"mongoose-timestamp":"*",
         "string_decoder":"*"
     }
 }
