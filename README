@@ -1,0 +1,6 @@
+Install
+To install:
+
+cd Ripple-Broker-JS
+npm install #this will install all dependencies
+
