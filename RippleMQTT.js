@@ -20,7 +20,7 @@ mqtt.createServer(function(client) {
 	client.on('subscribe', function(packet){
 		var granted = [];
 		for(var i=0; i < packet.subscriptions.length; i++){
-			granted.push(packet.subscriptions[i]).qos;
+			granted.push(packet.subscriptions[i].qos);
 		}
 		client.suback({granted:granted, messageId: packet.messageId});
 	});
