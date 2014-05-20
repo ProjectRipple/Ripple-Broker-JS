@@ -41,7 +41,6 @@ socket.on( 'message', function(message, r) {
 	var rec = new Record(stuff);
 	mqtt_c.publish('record', JSON.stringify(rec));
 	rec.save()
-    //console.log('got something!');
 });
 
 socket.on( 'error' , function(error){
