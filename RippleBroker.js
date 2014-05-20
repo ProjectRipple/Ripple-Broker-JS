@@ -9,13 +9,14 @@ var decoder = new StringDecoder('hex');
 var mqtt_c;
 
 //mongo db setup
+/*
 mongoose.connect('mongodb://localhost/ripple');
 var db = mongoose.connection;
 db.on('error', console.error.bind(console,'mongo error: '));
 db.once('open', function callback(){
 	console.log('mongodb success');
 });
-
+*/
 var RecordSchema = mongoose.Schema({
     src : {type:[String], index: true},
     seq : Number,
@@ -40,6 +41,7 @@ socket.on( 'message', function(message, r) {
 	var rec = new Record(stuff);
 	mqtt_c.publish('record', JSON.stringify(rec));
 	rec.save()
+    //console.log('got something!');
 });
 
 socket.on( 'error' , function(error){
