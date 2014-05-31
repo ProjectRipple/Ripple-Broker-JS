@@ -37,6 +37,23 @@ RecordSchema.plugin(timestamps,{
 var Record = mongoose.model('Record', RecordSchema);
 socket.on( 'message', function(message, r) {
 	var header = message.slice(0,2);
+    var dispatchByte = header.readUInt8(0);
+    var msgType = (header.readUInt8(1) & 0xf0)>>>4;
+    var version = header.readUInt8(1) & 0x0f;
+
+    
+    switch(msgType) {
+        case 0x2: // vitalprop data message
+            console.log("VitalProp data message received.");
+            break;
+        case 0x4: // ECG data stream
+            console.log("ECG data stream received.");
+            break;
+        default:
+            console.log("Unknown message type: " + msgType.toString(16));
+    }
+
+    
 	var stuff = parse(message.slice(2,21))
 	var rec = new Record(stuff);
 	mqtt_c.publish('record', JSON.stringify(rec));
