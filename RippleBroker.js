@@ -41,10 +41,24 @@ socket.on( 'message', function(message, r) {
     var msgType = (header.readUInt8(1) & 0xf0)>>>4;
     var version = header.readUInt8(1) & 0x0f;
 
-    
     switch(msgType) {
         case 0x2: // vitalprop data message
             console.log("VitalProp data message received.");
+            //console.log("message: " + message.toString('hex'));
+            //console.log("message length: " + r.size);
+            // one extra byte so assume length 20 rather than 19 for vitalcast
+            for( var i = 2; i < r.size; i+=20) {
+                var stuff = parse(message.slice(i,i+19));
+                if(stuff.src == '0000000000000000'){
+                    console.log('found ' + ((i-2)/20) + ' records.');
+                    break; // no more messages in packet
+                } else {
+                    var rec = new Record(stuff);
+                    mqtt_c.publish('record', JSON.stringify(rec));
+                    rec.save();
+                }
+            }
+
             break;
         case 0x4: // ECG data stream
             console.log("ECG data stream received.");
@@ -52,12 +66,6 @@ socket.on( 'message', function(message, r) {
         default:
             console.log("Unknown message type: " + msgType.toString(16));
     }
-
-    
-	var stuff = parse(message.slice(2,21))
-	var rec = new Record(stuff);
-	mqtt_c.publish('record', JSON.stringify(rec));
-	rec.save()
 });
 
 socket.on( 'error' , function(error){
