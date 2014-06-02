@@ -50,11 +50,11 @@ socket.on( 'message', function(message, r) {
             for( var i = 2; i < r.size; i+=20) {
                 var stuff = parse(message.slice(i,i+19));
                 if(stuff.src == '0000000000000000'){
-                    console.log('found ' + ((i-2)/20) + ' records.');
+                    //console.log('found ' + ((i-2)/20) + ' records.');
                     break; // no more messages in packet
                 } else {
                     var rec = new Record(stuff);
-                    mqtt_c.publish('record', JSON.stringify(rec));
+                    mqtt_c.publish('P_Stats/vitalprop', JSON.stringify(rec));
                     rec.save();
                 }
             }
