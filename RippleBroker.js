@@ -7,6 +7,7 @@ var Schema = mongoose.Schema;
 var StringDecoder = require('string_decoder').StringDecoder;
 var decoder = new StringDecoder('hex');
 var mqtt_c;
+var RippleREST    = require('./RippleREST');
 
 //mongo db setup
 /*
@@ -35,8 +36,29 @@ RecordSchema.plugin(timestamps,{
 });
 
 var Record = mongoose.model('Record', RecordSchema);
-socket.on( 'message', function(message, r) {
-	var header = message.slice(0,2);
+
+// TODO: remove hardcoded IPs and IDs
+// need ID for ecg stream publish
+/*
+var lip2id = {
+            'aaaa:0000:0000:0000:0212:7404:0004:0404':'0012740400040404',
+            'aaaa:0000:0000:0000:0212:7403:0003:0303':'0012740300030303',
+            'aaaa:0000:0000:0000:0212:7402:0002:0202':'0012740200020202'
+            };
+*/
+// shortened IPs to IDs to match the r.address string
+var ip2id = {
+            'aaaa::212:7404:4:404':'0012740400040404',
+            'aaaa::212:7403:3:303':'0012740300030303',
+            'aaaa::212:7402:2:202':'0012740200020202'
+            };
+
+// handle messages on both UDP sockets
+RippleREST.socket.on( 'message', onMessage);
+socket.on( 'message', onMessage);
+ 
+function onMessage (message, r) {
+    var header = message.slice(0,2);
     var dispatchByte = header.readUInt8(0);
     var msgType = (header.readUInt8(1) & 0xf0)>>>4;
     var version = header.readUInt8(1) & 0x0f;
@@ -61,7 +83,18 @@ socket.on( 'message', function(message, r) {
 
             break;
         case 0x4: // ECG data stream
-            console.log("ECG data stream received.");
+            console.log("ECG data stream received from " + r.address + '.');
+
+            //console.log("src: " + r.address);
+            //console.log("Seq: " + message.slice(2,6).toString('hex'));
+            //console.log("Values: " + message.slice(6,r.size).toString('hex'));
+
+            if(ip2id[r.address]){
+                //console.log('ID found for IP ' + r.address);
+                // Send as hex string because otherwise certain bytes are
+                //  replaced with 0xEFBFBD, which is unknown/unprintable character
+                mqtt_c.publish('P_Stream/'+ip2id[r.address]+'/ecg', message.slice(2,r.size).toString('hex'));
+            }
             break;
         default:
             console.log("Unknown message type: " + msgType.toString(16));
