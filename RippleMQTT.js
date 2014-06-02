@@ -1,6 +1,15 @@
 var mqtt = require('mqtt');
 
-mqtt.createServer(function(client) {
+var mqttServer  = mqtt.createServer(mqttHandler);
+var mqttServer6 = mqtt.createServer(mqttHandler);
+
+//mqttServer.listen(1883);
+// listen to :: for both ipv6 and ipv4
+mqttServer6.listen(1883,"::");
+// must specify ipv6 address for server to listen on ipv6
+
+
+function mqttHandler(client) {
 	var self = this;
 
 	if(!self.clients) self.clients = {};
@@ -70,4 +79,4 @@ mqtt.createServer(function(client) {
 	client.on('close', function(err){
 		delete self.clients[client.id];
 	});
-}).listen(1883);
+};

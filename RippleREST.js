@@ -42,6 +42,7 @@ function ecgrequest(req, res, next){
 
 server.post('/ecgrequest', ecgrequest);
 
-server.listen(9113);
+// listen to :: for both ipv6 and ipv4
+server.listen(9113,"::");
 console.log("REST server started on port 9113.");
 

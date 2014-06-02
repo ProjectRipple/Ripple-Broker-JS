@@ -99,7 +99,7 @@ function onMessage (message, r) {
         default:
             console.log("Unknown message type: " + msgType.toString(16));
     }
-});
+};
 
 socket.on( 'error' , function(error){
 	console.log('Error, Socket Closing');
