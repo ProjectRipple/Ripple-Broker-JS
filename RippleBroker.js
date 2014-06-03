@@ -60,10 +60,23 @@ socket.on( 'message', onMessage);
 function onMessage (message, r) {
     var header = message.slice(0,2);
     var dispatchByte = header.readUInt8(0);
-    var msgType = (header.readUInt8(1) & 0xf0)>>>4;
-    var version = header.readUInt8(1) & 0x0f;
+    var version = (header.readUInt8(1) & 0xf0)>>>4;
+    var msgType = header.readUInt8(1) & 0x0f;
 
     switch(msgType) {
+        case 0x1:
+            console.log("vitalucast record received.");
+            //console.log("From: " + r.address);
+            //console.log("Message: " + message.toString('hex'));
+            
+            // different parse method since format changed in new simulation
+            //  Also, the device status seems to be missing from msg?
+            var stuff = parse_vc(message.slice(2,18));
+            var rec = new Record(stuff);
+            // TODO: change topic to one specified in interface doc
+            mqtt_c.publish('P_Stats/vitalprop', JSON.stringify(rec));
+            rec.save();
+        break;
         case 0x2: // vitalprop data message
             console.log("VitalProp data message received.");
             //console.log("message: " + message.toString('hex'));
@@ -116,7 +129,7 @@ socket.bind(5690);
 
 
 /**Helper Methods*/
-INDEX = {
+INDEX_VP = {
 s_source : 0,
 e_source : 8,
 s_sequence : 8,
@@ -139,15 +152,52 @@ e_status : 19
 
 function parse(buff){
         return {
-                src  : decoder.write(buff.slice(INDEX.s_source, INDEX.e_source)),
-                seq  : buff.readUInt16BE(INDEX.s_sequence),
-                age  : buff.readUInt8(INDEX.s_est_age),
-                hops : buff.readUInt8(INDEX.s_hops),
-                hr   : buff.readUInt8(INDEX.s_hrate),
-                sp02 : buff.readUInt8(INDEX.s_sp02),
-                resp : buff.readUInt8(INDEX.s_resp_pm),
-                temp : buff.readUInt16BE(INDEX.s_temp),
-                stat : buff.readUInt16BE(INDEX.s_status)
+                src  : decoder.write(buff.slice(INDEX_VP.s_source, INDEX_VP.e_source)),
+                seq  : buff.readUInt16BE(INDEX_VP.s_sequence),
+                age  : buff.readUInt8(INDEX_VP.s_est_age),
+                hops : buff.readUInt8(INDEX_VP.s_hops),
+                hr   : buff.readUInt8(INDEX_VP.s_hrate),
+                sp02 : buff.readUInt8(INDEX_VP.s_sp02),
+                resp : buff.readUInt8(INDEX_VP.s_resp_pm),
+                temp : buff.readUInt16BE(INDEX_VP.s_temp),
+                stat : buff.readUInt16BE(INDEX_VP.s_status)
+           }
+}
+
+
+// Vitalcast from mockrippledevice 20140514
+INDEX_VC = {
+s_source : 0,
+e_source : 8,
+s_sequence : 8,
+e_eequence : 10,
+s_est_age : 10,
+e_est_age : 11,
+s_hops : 11,
+e_hops : 12,
+s_hrate : 12,
+e_hrate : 13,
+s_sp02 : 13,
+e_sp02 : 14,
+s_resp_pm : 14,
+e_resp_pm : 15,
+s_temp	: 15,
+e_temp	: 16,
+s_status : 16,
+e_status : 18	
+};
+
+function parse_vc(buff){
+        return {
+                src  : decoder.write(buff.slice(INDEX_VC.s_source, INDEX_VC.e_source)),
+                seq  : buff.readUInt16BE(INDEX_VC.s_sequence),
+                age  : buff.readUInt8(INDEX_VC.s_est_age),
+                hops : buff.readUInt8(INDEX_VC.s_hops),
+                hr   : buff.readUInt8(INDEX_VC.s_hrate),
+                sp02 : buff.readUInt8(INDEX_VC.s_sp02),
+                resp : buff.readUInt8(INDEX_VC.s_resp_pm),
+                temp : buff.readUInt8(INDEX_VC.s_temp),
+                //stat : buff.readUInt16BE(INDEX_VC.s_status)
            }
 }
 

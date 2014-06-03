@@ -32,7 +32,7 @@ function ecgrequest(req, res, next){
         res.send(604, {'result':'failure','msg':'Patient not found'});
     } else {
 
-        var requestString = 'd231' + destIP + '0f';
+        var requestString = 'd213' + destIP + '30';
         var message = new Buffer(requestString, 'hex');
 
         udpSocket.send(message, 0, message.length, 5688, id2ip[req.params.id], null);
