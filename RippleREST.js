@@ -1,18 +1,23 @@
 var restify     = require('restify');
 var udpSocket   = require('dgram').createSocket('udp6');
 
-// export socket so RippleBroker.js can handle incoming stream
-exports.socket = udpSocket;
 
-// TODO: remove hardcoded IP addresses
+
 // assume we know device ID -> IP
 var id2ip = {
             '0012740400040404':'aaaa:0000:0000:0000:0212:7404:0004:0404', 
             '0012740300030303':'aaaa:0000:0000:0000:0212:7403:0003:0303',
-            '0012740200020202':'aaaa:0000:0000:0000:0212:7402:0002:0202'
+            '0012740200020202':'aaaa:0000:0000:0000:0212:7402:0002:0202',
+            '00050c2a8c93eea9':'aaaa:0000:0000:0000:0205:0c2a:8c93:eea9'
             };
 // assuming Broker is on Border router
 var destIP = 'AAAA0000000000000000000000000001';
+
+// export so that RippleBroker.js can update with new ids as they come in.
+exports.id2ip = id2ip;
+
+// export socket so RippleBroker.js can handle incoming stream
+exports.socket = udpSocket;
 
 // have to send request from this port
 udpSocket.bind(5688);

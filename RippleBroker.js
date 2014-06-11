@@ -1,57 +1,63 @@
-var socket 	  = require('dgram').createSocket('udp6');
-var RippleMQTT	  = require('./RippleMQTT');
-var mqtt 	  = require('mqtt');
-var mongoose	  = require('mongoose');
-var timestamps    = require('mongoose-timestamp');
-var Schema = mongoose.Schema;
-var StringDecoder = require('string_decoder').StringDecoder;
-var decoder = new StringDecoder('hex');
+var socket              = require('dgram').createSocket('udp6');
+var RippleMQTT	        = require('./RippleMQTT');
+var mqtt 	            = require('mqtt');
 var mqtt_c;
-var RippleREST    = require('./RippleREST');
+var common              = require('./RippleCommon');
+var RippleREST          = require('./RippleREST');
+var parser              = require('./RippleMessageParser');
 
-//mongo db setup
-/*
-mongoose.connect('mongodb://localhost/ripple');
-var db = mongoose.connection;
-db.on('error', console.error.bind(console,'mongo error: '));
-db.once('open', function callback(){
-	console.log('mongodb success');
-});
-*/
-var RecordSchema = mongoose.Schema({
-    src : {type:[String], index: true},
-    seq : Number,
-    age : Number,
-    hops: Number,
-    hr  : Number,
-    sp02: Number,
-    resp: Number,
-    temp: Number,
-    stat: Number
-});
+var id2ip               = RippleREST.id2ip;
+var ip2id               = common.ip2id;
+var parse_vc            = parser.parse_vc;
+var parse_vp_old        = parser.parse_vp_old;
 
-RecordSchema.plugin(timestamps,{
-	createdAt: "c",
-	updatedAt: "u"
-});
 
-var Record = mongoose.model('Record', RecordSchema);
+function onVitalUcast (message, rinfo){
+    
+    var stuff = parse_vc(message.slice(2));
+    console.log(message.toString('hex'));
+    console.log(JSON.stringify(stuff));
 
-// TODO: remove hardcoded IPs and IDs
-// need ID for ecg stream publish
-/*
-var lip2id = {
-            'aaaa:0000:0000:0000:0212:7404:0004:0404':'0012740400040404',
-            'aaaa:0000:0000:0000:0212:7403:0003:0303':'0012740300030303',
-            'aaaa:0000:0000:0000:0212:7402:0002:0202':'0012740200020202'
-            };
-*/
-// shortened IPs to IDs to match the r.address string
-var ip2id = {
-            'aaaa::212:7404:4:404':'0012740400040404',
-            'aaaa::212:7403:3:303':'0012740300030303',
-            'aaaa::212:7402:2:202':'0012740200020202'
-            };
+    if(id2ip[stuff.src] === undefined){
+        var ip = stuff.ip.slice(0,4);
+        for (var i = 1; i < 8; i++) {
+            ip += ':' + stuff.ip.slice(i*4,(i*4)+4);
+        };
+        id2ip[stuff.src] = ip;
+        ip2id[ip] = stuff.src;
+        console.log("New device id " + stuff.src + ' with address ' +  ip);
+    }
+
+    mqtt_c.publish('P_Stats/'+stuff.src+'/vitalcast', JSON.stringify(stuff));
+
+};
+
+function onVitalProp (message, rinfo){
+    // one extra byte so assume length 20 rather than 19 for vitalcast
+    for( var i = 2; i < r.size; i+=20) {
+        var stuff = parse_vp_old(message.slice(i,i+19));
+        if(stuff.src == '0000000000000000'){
+            //console.log('found ' + ((i-2)/20) + ' records.');
+            break; // no more messages in packet
+        } else {
+            mqtt_c.publish('P_Stats/'+stuff.src+'/vitalcast', JSON.stringify(stuff));
+        }
+    }
+
+};
+
+function onEcgStream (message, rinfo){
+
+    ip = common.expandIPv6Address(rinfo.address);
+    if(ip2id[ip]){
+        // Send as hex string because otherwise certain bytes are
+        //  replaced with 0xEFBFBD, which is unknown/unprintable character
+        mqtt_c.publish('P_Stream/'+ip2id[ip]+'/ecg', message.slice(2,rinfo.size).toString('hex'));
+    } else {
+        console.log('No id found for ip ' + ip + ' orginal r.info: ' + rinfo.address);
+    }
+
+};
 
 // handle messages on both UDP sockets
 RippleREST.socket.on( 'message', onMessage);
@@ -66,49 +72,19 @@ function onMessage (message, r) {
     switch(msgType) {
         case 0x1:
             console.log("vitalucast record received.");
-            //console.log("From: " + r.address);
-            //console.log("Message: " + message.toString('hex'));
-            
-            // different parse method since format changed in new simulation
-            //  Also, the device status seems to be missing from msg?
-            var stuff = parse_vc(message.slice(2,18));
-            var rec = new Record(stuff);
-            // TODO: change topic to one specified in interface doc
-            mqtt_c.publish('P_Stats/vitalprop', JSON.stringify(rec));
-            rec.save();
-        break;
+            onVitalUcast(message, r);
+            break;
+
         case 0x2: // vitalprop data message
             console.log("VitalProp data message received.");
-            //console.log("message: " + message.toString('hex'));
-            //console.log("message length: " + r.size);
-            // one extra byte so assume length 20 rather than 19 for vitalcast
-            for( var i = 2; i < r.size; i+=20) {
-                var stuff = parse(message.slice(i,i+19));
-                if(stuff.src == '0000000000000000'){
-                    //console.log('found ' + ((i-2)/20) + ' records.');
-                    break; // no more messages in packet
-                } else {
-                    var rec = new Record(stuff);
-                    mqtt_c.publish('P_Stats/vitalprop', JSON.stringify(rec));
-                    rec.save();
-                }
-            }
-
+            onVitalProp(message, r);
             break;
+
         case 0x4: // ECG data stream
             console.log("ECG data stream received from " + r.address + '.');
-
-            //console.log("src: " + r.address);
-            //console.log("Seq: " + message.slice(2,6).toString('hex'));
-            //console.log("Values: " + message.slice(6,r.size).toString('hex'));
-
-            if(ip2id[r.address]){
-                //console.log('ID found for IP ' + r.address);
-                // Send as hex string because otherwise certain bytes are
-                //  replaced with 0xEFBFBD, which is unknown/unprintable character
-                mqtt_c.publish('P_Stream/'+ip2id[r.address]+'/ecg', message.slice(2,r.size).toString('hex'));
-            }
+            onEcgStream(message, r);
             break;
+
         default:
             console.log("Unknown message type: " + msgType.toString(16));
     }
@@ -128,76 +104,5 @@ socket.on( 'listening', function(){
 socket.bind(5690);
 
 
-/**Helper Methods*/
-INDEX_VP = {
-s_source : 0,
-e_source : 8,
-s_sequence : 8,
-e_eequence : 10,
-s_est_age : 10,
-e_est_age : 11,
-s_hops : 11,
-e_hops : 12,
-s_hrate : 12,
-e_hrate : 13,
-s_sp02 : 13,
-e_sp02 : 14,
-s_resp_pm : 14,
-e_resp_pm : 15,
-s_temp	: 15,
-e_temp	: 17,
-s_status : 17,
-e_status : 19	
-};
 
-function parse(buff){
-        return {
-                src  : decoder.write(buff.slice(INDEX_VP.s_source, INDEX_VP.e_source)),
-                seq  : buff.readUInt16BE(INDEX_VP.s_sequence),
-                age  : buff.readUInt8(INDEX_VP.s_est_age),
-                hops : buff.readUInt8(INDEX_VP.s_hops),
-                hr   : buff.readUInt8(INDEX_VP.s_hrate),
-                sp02 : buff.readUInt8(INDEX_VP.s_sp02),
-                resp : buff.readUInt8(INDEX_VP.s_resp_pm),
-                temp : buff.readUInt16BE(INDEX_VP.s_temp),
-                stat : buff.readUInt16BE(INDEX_VP.s_status)
-           }
-}
-
-
-// Vitalcast from mockrippledevice 20140514
-INDEX_VC = {
-s_source : 0,
-e_source : 8,
-s_sequence : 8,
-e_eequence : 10,
-s_est_age : 10,
-e_est_age : 11,
-s_hops : 11,
-e_hops : 12,
-s_hrate : 12,
-e_hrate : 13,
-s_sp02 : 13,
-e_sp02 : 14,
-s_resp_pm : 14,
-e_resp_pm : 15,
-s_temp	: 15,
-e_temp	: 16,
-s_status : 16,
-e_status : 18	
-};
-
-function parse_vc(buff){
-        return {
-                src  : decoder.write(buff.slice(INDEX_VC.s_source, INDEX_VC.e_source)),
-                seq  : buff.readUInt16BE(INDEX_VC.s_sequence),
-                age  : buff.readUInt8(INDEX_VC.s_est_age),
-                hops : buff.readUInt8(INDEX_VC.s_hops),
-                hr   : buff.readUInt8(INDEX_VC.s_hrate),
-                sp02 : buff.readUInt8(INDEX_VC.s_sp02),
-                resp : buff.readUInt8(INDEX_VC.s_resp_pm),
-                temp : buff.readUInt8(INDEX_VC.s_temp),
-                //stat : buff.readUInt16BE(INDEX_VC.s_status)
-           }
-}
 
