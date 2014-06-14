@@ -49,10 +49,11 @@ function onVitalProp (message, rinfo){
 function onEcgStream (message, rinfo){
 
     ip = common.expandIPv6Address(rinfo.address);
+    console.log(message.toString('hex'));
     if(ip2id[ip]){
         // Send as hex string because otherwise certain bytes are
         //  replaced with 0xEFBFBD, which is unknown/unprintable character
-        mqtt_c.publish('P_Stream/'+ip2id[ip]+'/ecg', message.slice(2,rinfo.size).toString('hex'));
+        mqtt_c.publish('P_Stream/'+ip2id[ip]+'/ecg', message.slice(4,rinfo.size).toString('hex'));
     } else {
         console.log('No id found for ip ' + ip + ' orginal r.info: ' + rinfo.address);
     }
