@@ -18,11 +18,11 @@ function onVitalUcast (message, rinfo){
     console.log(message.toString('hex'));
     console.log(JSON.stringify(stuff));
 
-    if(id2ip[stuff.src] === undefined){
-        var ip = stuff.ip.slice(0,4);
-        for (var i = 1; i < 8; i++) {
-            ip += ':' + stuff.ip.slice(i*4,(i*4)+4);
-        };
+    var ip = stuff.ip.slice(0,4);
+    for (var i = 1; i < 8; i++) {
+        ip += ':' + stuff.ip.slice(i*4,(i*4)+4);
+    };
+    if(id2ip[stuff.src] === undefined || id2ip[stuff.src] != ip){
         id2ip[stuff.src] = ip;
         ip2id[ip] = stuff.src;
         console.log("New device id " + stuff.src + ' with address ' +  ip);
