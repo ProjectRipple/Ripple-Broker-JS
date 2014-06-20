@@ -37,9 +37,6 @@ var Record = mongoose.model('Record', RecordSchema);
 // need ID for ecg stream publish
 
 var ip2id = {
-            'aaaa:0000:0000:0000:0212:7404:0004:0404':'0012740400040404',
-            'aaaa:0000:0000:0000:0212:7403:0003:0303':'0012740300030303',
-            'aaaa:0000:0000:0000:0212:7402:0002:0202':'0012740200020202'
             };
 /*
 // shortened IPs to IDs to match the r.address string
@@ -92,3 +89,4 @@ function expandIPv6Address(address)
 
 exports.ip2id 				= ip2id;
 exports.expandIPv6Address 	= expandIPv6Address;
+

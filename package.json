@@ -1,6 +1,6 @@
 {
     "name":"Ripple-Broker-JS",
-    "version":"0.0.1",
+    "version":"0.0.2",
     "private": true,
 
     "dependencies":{
@@ -8,6 +8,7 @@
         "mongodb":"*",
         "mongoose":"*",
         "mongoose-timestamp":"*",
-        "string_decoder":"*"
+        "string_decoder":"*",
+        "restify":"*"
     }
 }

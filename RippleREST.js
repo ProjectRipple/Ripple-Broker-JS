@@ -5,10 +5,6 @@ var udpSocket   = require('dgram').createSocket('udp6');
 
 // assume we know device ID -> IP
 var id2ip = {
-            '0012740400040404':'aaaa:0000:0000:0000:0212:7404:0004:0404', 
-            '0012740300030303':'aaaa:0000:0000:0000:0212:7403:0003:0303',
-            '0012740200020202':'aaaa:0000:0000:0000:0212:7402:0002:0202',
-            '00050c2a8c93eea9':'aaaa:0000:0000:0000:0205:0c2a:8c93:eea9'
             };
 // assuming Broker is on Border router
 var destIP = 'AAAA0000000000000000000000000001';
