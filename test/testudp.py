@@ -1,14 +1,23 @@
 import socket
 import time
 import random
+import array
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5690
-source = bytearray([0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x20,0x21,0x22,0x23,0x24])
-source[17] = 0x00;
+
+# set starting message from hex string(taken from actual mote message)
+source = bytearray.fromhex("d2110012740013b77d5baaaa0000000000000212740013b77d5b0009405e2d0000630000")
+
+seq = 0;
+
 while True:
-    #randomize temperature (to show updates)
-	source[18] = random.randint(10,140);
-	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	sock.sendto(source, (UDP_IP, UDP_PORT))
-	time.sleep(2)	
+    seq += 1 # increment seq
+    source[26] = (seq >> 8) & 0xFF
+    source[27] = (seq & 0xff)
+    source[28] = random.randint(50,140) # heart rate
+    source[29] = random.randint(85,100) # sp02
+    source[33] = random.randint(90,100) # temperature LSB
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(source, (UDP_IP, UDP_PORT))
+    time.sleep(2)	
