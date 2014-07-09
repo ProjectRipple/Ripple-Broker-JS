@@ -79,4 +79,9 @@ function mqttHandler(client) {
 	client.on('close', function(err){
 		delete self.clients[client.id];
 	});
+
+    client.on('error', function(e) {
+        client.stream.end();
+        console.log(e);
+    });
 };
