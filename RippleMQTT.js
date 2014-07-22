@@ -15,6 +15,7 @@ function mqttHandler(client) {
 	if(!self.clients) self.clients = {};
 
 	client.on('connect',function(packet){
+        console.log("Client connected.");
 		client.connack({returnCode:0});
 		client.id = packet.clientId;
         client.subscriptions = [];
