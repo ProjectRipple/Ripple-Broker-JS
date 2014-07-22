@@ -11,6 +11,19 @@ var ip2id               = common.ip2id;
 var parse_vc            = parser.parse_vc;
 var parse_vp_old        = parser.parse_vp_old;
 
+var cloudlet_id         = 'Cloudlet1';
+var udp_port            = 5690;
+var mqtt_port           = 1883;
+var mqtt_host           = 'mqtt://localhost';
+var ping_delay_ms       = 10000;
+var ping_interval;
+
+var cloudlet_location   =   { 
+                                'lat':39.7808976,
+                                'lng':-84.1176709,
+                                'alt':239.0
+                            }
+
 
 function onVitalUcast (message, rinfo){
     
@@ -94,15 +107,43 @@ function onMessage (message, r) {
 socket.on( 'error' , function(error){
 	console.log('Error, Socket Closing');
 	socket.close();
+    console.log('Stopping ping...');
+    clearInterval(ping_interval);
 });
 
 socket.on( 'listening', function(){
 	var address = socket.address();
 	console.log('Listening: '+ address.address + address.port);
-	mqtt_c = mqtt.connect('mqtt://localhost');
+	mqtt_c = mqtt.createClient(mqtt_port, mqtt_host);
+    mqtt_c.on('message', function (topic, message){
+        console.log("New MQTT message:" + message);
+    });
+    mqtt_c.on('connect', function (){
+        console.log("Connected to MQTT server");
+    });
+    mqtt_c.on('error', function(e){
+        // no idea if this is even an event
+        console.log("error????" + e);
+    });
+    ping_interval = setInterval(sendPing, ping_delay_ms);
 });
 
-socket.bind(5690);
+function sendPing() {
+    var date = new Date().toISOString();
+    var msg = {
+            'cid':cloudlet_id, 
+            'date':date, 
+            'location':cloudlet_location,
+            'patients':[
+                {'id':'0012740013b77d5b', 'last_seen':'2014-07-11T13:41:12Z'}, 
+                {'id':'0012740013b77d34', 'last_seen':'2014-07-11T13:41:12Z'}
+                ]
+            };
+    console.log('Message: ' + JSON.stringify(msg));
+    //mqtt_c.publish('C_Status/' + cloudlet_id + '/ping', JSON.stringify(msg));
+};
+
+socket.bind(udp_port);
 
 
 
