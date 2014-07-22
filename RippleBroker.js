@@ -14,7 +14,8 @@ var parse_vp_old        = parser.parse_vp_old;
 var cloudlet_id         = 'Cloudlet1';
 var udp_port            = 5690;
 var mqtt_port           = 1883;
-var mqtt_host           = 'mqtt://localhost';
+var mqtt_host           = 'localhost';
+var mqtt_url            = 'mqtt://localhost'
 var ping_delay_ms       = 10000;
 var ping_interval;
 
@@ -26,23 +27,33 @@ var cloudlet_location   =   {
 
 
 function onVitalUcast (message, rinfo){
-    
+    // get message date
+    var msgDate = new Date().toISOString();
+    // parse message
     var stuff = parse_vc(message.slice(2));
-    console.log(message.toString('hex'));
-    console.log(JSON.stringify(stuff));
+    // debugging logs
+    //console.log(message.toString('hex'));
+    //console.log(JSON.stringify(stuff));
 
     var ip = stuff.ip.slice(0,4);
     for (var i = 1; i < 8; i++) {
         ip += ':' + stuff.ip.slice(i*4,(i*4)+4);
     };
-    if(id2ip[stuff.src] === undefined || id2ip[stuff.src] != ip){
-        id2ip[stuff.src] = ip;
-        ip2id[ip] = stuff.src;
+    if(id2ip[stuff.src] === undefined || id2ip[stuff.src]['ip'] != ip){
+        var record = {
+            'pid':stuff.src,
+            'ip':ip,
+            'last_seen':msgDate
+        };
+        // reference record in both maps
+        id2ip[stuff.src] = record;
+        ip2id[ip] = record;
         console.log("New device id " + stuff.src + ' with address ' +  ip);
     }
-
+    // always update last_seen
+    id2ip[stuff.src]['last_seen'] = msgDate;
+    // publish message
     mqtt_c.publish('P_Stats/'+stuff.src+'/vitalcast', JSON.stringify(stuff));
-
 };
 
 function onVitalProp (message, rinfo){
@@ -66,7 +77,7 @@ function onEcgStream (message, rinfo){
     if(ip2id[ip]){
         // Send as hex string because otherwise certain bytes are
         //  replaced with 0xEFBFBD, which is unknown/unprintable character
-        mqtt_c.publish('P_Stream/'+ip2id[ip]+'/ecg', message.slice(4,rinfo.size).toString('hex'));
+        mqtt_c.publish('P_Stream/'+ip2id[ip]['pid']+'/ecg', message.slice(4,rinfo.size).toString('hex'));
     } else {
         console.log('No id found for ip ' + ip + ' orginal r.info: ' + rinfo.address);
     }
@@ -114,37 +125,45 @@ socket.on( 'error' , function(error){
 socket.on( 'listening', function(){
 	var address = socket.address();
 	console.log('Listening: '+ address.address + address.port);
-	mqtt_c = mqtt.createClient(mqtt_port, mqtt_host);
+    // Create mqtt client
+	mqtt_c = mqtt.connect(mqtt_url);
+
+    // setup mqtt client events
     mqtt_c.on('message', function (topic, message){
         console.log("New MQTT message:" + message);
     });
+
     mqtt_c.on('connect', function (){
         console.log("Connected to MQTT server");
     });
+
     mqtt_c.on('error', function(e){
         // no idea if this is even an event
         console.log("error????" + e);
     });
+
+    // set interval for pings
     ping_interval = setInterval(sendPing, ping_delay_ms);
 });
 
 function sendPing() {
     var date = new Date().toISOString();
+    // build patient list
+    var patients = [];
+    Object.keys(id2ip).forEach(function(key){
+        patients.push(id2ip[key]);
+    });
+    // build message
     var msg = {
             'cid':cloudlet_id, 
             'date':date, 
             'location':cloudlet_location,
-            'patients':[
-                {'id':'0012740013b77d5b', 'last_seen':'2014-07-11T13:41:12Z'}, 
-                {'id':'0012740013b77d34', 'last_seen':'2014-07-11T13:41:12Z'}
-                ]
+            'patients':patients
             };
     console.log('Message: ' + JSON.stringify(msg));
     //mqtt_c.publish('C_Status/' + cloudlet_id + '/ping', JSON.stringify(msg));
 };
 
 socket.bind(udp_port);
-
-
 
 

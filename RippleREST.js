@@ -35,9 +35,9 @@ function ecgrequest(req, res, next){
 
         var requestString = 'd213' + destIP + '10';
         var message = new Buffer(requestString, 'hex');
-
-        udpSocket.send(message, 0, message.length, 5688, id2ip[req.params.id], null);
-        res.send(200,{'result':'success','msg':'Request sent to device id: ' + req.params.id});
+        'Request sent to device id: ' + req.params.id + ' at ' + id2ip[req.params.id]['ip'];
+        udpSocket.send(message, 0, message.length, 5688, id2ip[req.params.id]['ip'], null);
+        res.send(200,{'result':'success','msg':'Request sent to device id: ' + req.params.id + ' at ' + id2ip[req.params.id]['ip']});
     }
 }
 
