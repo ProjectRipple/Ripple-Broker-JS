@@ -160,8 +160,8 @@ function sendPing() {
             'location':cloudlet_location,
             'patients':patients
             };
-    console.log('Message: ' + JSON.stringify(msg));
-    //mqtt_c.publish('C_Status/' + cloudlet_id + '/ping', JSON.stringify(msg));
+    //console.log('Message: ' + JSON.stringify(msg));
+    mqtt_c.publish('C_Status/' + cloudlet_id + '/ping', JSON.stringify(msg));
 };
 
 socket.bind(udp_port);
