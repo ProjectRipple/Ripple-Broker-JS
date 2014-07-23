@@ -41,7 +41,7 @@ function onVitalUcast (message, rinfo){
     };
     if(id2ip[stuff.src] === undefined || id2ip[stuff.src]['ip'] != ip){
         var record = {
-            'pid':stuff.src,
+            'id':stuff.src,
             'ip':ip,
             'last_seen':msgDate
         };
@@ -77,7 +77,7 @@ function onEcgStream (message, rinfo){
     if(ip2id[ip]){
         // Send as hex string because otherwise certain bytes are
         //  replaced with 0xEFBFBD, which is unknown/unprintable character
-        mqtt_c.publish('P_Stream/'+ip2id[ip]['pid']+'/ecg', message.slice(4,rinfo.size).toString('hex'));
+        mqtt_c.publish('P_Stream/'+ip2id[ip]['id']+'/ecg', message.slice(4,rinfo.size).toString('hex'));
     } else {
         console.log('No id found for ip ' + ip + ' orginal r.info: ' + rinfo.address);
     }
