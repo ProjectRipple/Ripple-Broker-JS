@@ -19,7 +19,7 @@ var mqtt_url            = 'mqtt://localhost'
 var ping_delay_ms       = 10000;
 var ping_interval;
 
-var cloudlet_location   =   { 
+var cloudlet_location   =   {
                                 'lat':39.7808976,
                                 'lng':-84.1176709,
                                 'alt':239.0
@@ -87,7 +87,7 @@ function onEcgStream (message, rinfo){
 // handle messages on both UDP sockets
 RippleREST.socket.on( 'message', onMessage);
 socket.on( 'message', onMessage);
- 
+
 function onMessage (message, r) {
     var header = message.slice(0,2);
     var dispatchByte = header.readUInt8(0);
@@ -129,12 +129,12 @@ socket.on( 'listening', function(){
 	mqtt_c = mqtt.connect(mqtt_url);
 
     // setup mqtt client events
-    mqtt_c.on('message', function (topic, message){
-        console.log("New MQTT message:" + message);
-    });
+    mqtt_c.on('message', onMqttMessage);
 
     mqtt_c.on('connect', function (){
         console.log("Connected to MQTT server");
+        // Subscribe to certain topics
+        mqtt_c.subscribe("P_Stats/+/info");
     });
 
     mqtt_c.on('error', function(e){
@@ -146,6 +146,11 @@ socket.on( 'listening', function(){
     ping_interval = setInterval(sendPing, ping_delay_ms);
 });
 
+function onMqttMessage(topic, message){
+    console.log("Mqtt message with topic: " + topic);
+    console.log("Message: " + message);
+}
+
 function sendPing() {
     var date = new Date().toISOString();
     // build patient list
@@ -155,8 +160,8 @@ function sendPing() {
     });
     // build message
     var msg = {
-            'cid':cloudlet_id, 
-            'date':date, 
+            'cid':cloudlet_id,
+            'date':date,
             'location':cloudlet_location,
             'patients':patients
             };
@@ -165,5 +170,3 @@ function sendPing() {
 };
 
 socket.bind(udp_port);
-
-
