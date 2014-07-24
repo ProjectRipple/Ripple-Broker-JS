@@ -71,7 +71,7 @@ function patientInfoRequest(req, res, next){
         var arrayLength = reqPatients.length;
         for(var i = 0; i < arrayLength; i++){
 
-            var pid = reqPatients[i]['id'];
+            var pid = reqPatients[i]['pid'];
             var lastUpdatedString = reqPatients[i]['last_updated'];
 
             if(pid === undefined || pid == ''){
