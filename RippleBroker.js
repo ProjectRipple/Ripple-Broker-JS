@@ -10,6 +10,7 @@ var id2ip               = RippleREST.id2ip;
 var ip2id               = common.ip2id;
 var parse_vc            = parser.parse_vc;
 var parse_vp_old        = parser.parse_vp_old;
+var patientInfo         = RippleREST.patientInfo;
 
 var cloudlet_id         = 'Cloudlet1';
 var udp_port            = 5690;
@@ -149,6 +150,16 @@ socket.on( 'listening', function(){
 function onMqttMessage(topic, message){
     console.log("Mqtt message with topic: " + topic);
     console.log("Message: " + message);
+    var reg = new RegExp('P_Stats/.*/info');
+    if(reg.test(topic)){
+        console.log('Info message.');
+        try {
+            var json = JSON.parse(message);
+            patientInfo[json['pid']] = json;
+        } catch(e){
+            console.log(e);
+        }
+    }
 }
 
 function sendPing() {

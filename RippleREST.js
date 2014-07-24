@@ -18,6 +18,12 @@ exports.socket = udpSocket;
 // have to send request from this port
 udpSocket.bind(5688);
 
+// object mapping patient id's to their info objects
+patientInfo = {};
+
+// export info object for broker to manage
+exports.patientInfo = patientInfo;
+
 var server = restify.createServer();
 
 server.use(restify.bodyParser());
@@ -41,9 +47,86 @@ function ecgrequest(req, res, next){
     }
 }
 
+function patientInfoRequest(req, res, next){
+
+
+    if(req.params.patients === undefined){
+        return next(new restify.InvalidArgumentError('Patients list must be specified'));
+    } else {
+        try {
+            var reqPatients = JSON.parse(req.params.patients);
+        } catch(e) {
+            console.log(e);
+            return next(new restify.InvalidArgumentError('Parse error: Patients must be a JSON array.'));
+        }
+        if(!Array.isArray(reqPatients)){
+            return next(new restify.InvalidArgumentError('Patients must be a JSON array.'));
+        }
+
+
+        var resPatients = [];
+        // track which patients are processed so we know any that were missed at the end.
+        var includedPatients = {};
+
+        var arrayLength = reqPatients.length;
+        for(var i = 0; i < arrayLength; i++){
+
+            var pid = reqPatients[i]['id'];
+            var lastUpdatedString = reqPatients[i]['last_updated'];
+
+            if(pid === undefined || pid == ''){
+                // no id, skip entry
+                continue;
+            }
+            // pid exists, so save that is has been processed
+            includedPatients[pid] = pid;
+
+            if(patientInfo[pid] === undefined){
+                // no info, send dummy object with just id
+                resPatients.push({'pid':pid});
+                continue;
+            }
+
+            if(lastUpdatedString === undefined){
+                // no update time, just add patient info
+                resPatients.push(patientInfo[pid]);
+                continue;
+            }
+
+            // ECMAScript 5 required for ISO 8601 string to work here
+            var lastUpdated = new Date(lastUpdatedString);
+            if(isNaN(lastUpdated.getTime())){
+                // invalid time string, default to add info
+                resPatients.push(patientInfo[pid]);
+                continue;
+            }
+
+            // assume info date is still a string
+            var infoDate = new Date(patientInfo[pid]['date']);
+
+            if(infoDate > lastUpdated){
+                // stored info date is newer
+                resPatients.push(patientInfo[pid]);
+            }
+        }
+
+        Object.keys(patientInfo).forEach(function(key){
+            if(includedPatients[key] === undefined){
+                // patient not requested, but is in our records, so send
+                resPatients.push(patientInfo[key]);
+                includedPatients[key] = key;
+            }
+        });
+
+        res.send(200, {'result':'success', 'msg':'Request successful.', 'patients':resPatients});
+    }
+
+
+}
+
 server.post('/ecgrequest', ecgrequest);
+server.post('/patientinforequest', patientInfoRequest);
 
 // listen to :: for both ipv6 and ipv4
 server.listen(9113,"::");
 console.log("REST server started on port 9113.");
-
