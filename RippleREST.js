@@ -26,8 +26,6 @@ exports.patientInfo = patientInfo;
 
 var server = restify.createServer();
 
-server.use(restify.bodyParser());
-
 function ecgrequest(req, res, next){
 
     if(req.params.id === undefined){
@@ -124,8 +122,8 @@ function patientInfoRequest(req, res, next){
 
 }
 
-server.post('/ecgrequest', ecgrequest);
-server.post('/patientinforequest', patientInfoRequest);
+server.post('/ecgrequest', restify.urlEncodedBodyParser(), ecgrequest);
+server.post('/patientinforequest', restify.urlEncodedBodyParser(), patientInfoRequest);
 
 // listen to :: for both ipv6 and ipv4
 server.listen(9113,"::");
