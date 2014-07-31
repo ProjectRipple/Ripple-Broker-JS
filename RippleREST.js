@@ -123,6 +123,7 @@ function patientInfoRequest(req, res, next){
 }
 
 server.post('/ecgrequest', restify.urlEncodedBodyParser(), ecgrequest);
+// TODO: Change patient info request to just have JSON body instead of using url param encoding
 server.post('/patientinforequest', restify.urlEncodedBodyParser(), patientInfoRequest);
 
 // listen to :: for both ipv6 and ipv4
