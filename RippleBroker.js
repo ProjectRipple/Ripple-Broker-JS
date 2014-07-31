@@ -136,6 +136,7 @@ socket.on( 'listening', function(){
         console.log("Connected to MQTT server");
         // Subscribe to certain topics
         mqtt_c.subscribe("P_Stats/+/info");
+        mqtt_c.subscribe("P_Action/note/+");
     });
 
     mqtt_c.on('error', function(e){
@@ -159,6 +160,9 @@ function onMqttMessage(topic, message){
         } catch(e){
             console.log(e);
         }
+    } else {
+        console.log('other message with topic: ' + topic);
+        console.log(message);
     }
 }
 
