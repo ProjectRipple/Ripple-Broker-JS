@@ -1,3 +1,4 @@
+// Import modules
 var socket              = require('dgram').createSocket('udp6');
 var RippleMQTT	        = require('./RippleMQTT');
 var mqtt 	            = require('mqtt');
@@ -6,12 +7,14 @@ var common              = require('./RippleCommon');
 var RippleREST          = require('./RippleREST');
 var parser              = require('./RippleMessageParser');
 
+// Get references to exported values of other modules
 var id2ip               = RippleREST.id2ip;
 var ip2id               = common.ip2id;
 var parse_vc            = parser.parse_vc;
 var parse_vp_old        = parser.parse_vp_old;
 var patientInfo         = RippleREST.patientInfo;
 
+// config settings for cloudlet
 var cloudlet_id         = 'Cloudlet1';
 var udp_port            = 5690;
 var mqtt_port           = 1883;
@@ -20,6 +23,7 @@ var mqtt_url            = 'mqtt://localhost'
 var ping_delay_ms       = 10000;
 var ping_interval;
 
+// Location of this cloudlet (to be updated from GPS later)
 var cloudlet_location   =   {
                                 'lat':39.7808976,
                                 'lng':-84.1176709,
@@ -27,19 +31,26 @@ var cloudlet_location   =   {
                             }
 
 
+/**
+ * Process a vitalcast message
+ * @param message - message to parse
+ * @param rinfo - Info object for message
+ */
 function onVitalUcast (message, rinfo){
     // get message date
     var msgDate = new Date().toISOString();
-    // parse message
+    // parse message (ignoring first 2 bytes)
     var stuff = parse_vc(message.slice(2));
     // debugging logs
     //console.log(message.toString('hex'));
     //console.log(JSON.stringify(stuff));
 
+    // build the full IPv6 string
     var ip = stuff.ip.slice(0,4);
     for (var i = 1; i < 8; i++) {
         ip += ':' + stuff.ip.slice(i*4,(i*4)+4);
     };
+    // Check if record needs update
     if(id2ip[stuff.src] === undefined || id2ip[stuff.src]['ip'] != ip){
         var record = {
             'id':stuff.src,
@@ -57,6 +68,11 @@ function onVitalUcast (message, rinfo){
     mqtt_c.publish('P_Stats/'+stuff.src+'/vitalcast', JSON.stringify(stuff));
 };
 
+/**
+ * Process a vital prop message (needs updating)
+ * @param message - message to parse
+ * @param rinfo - Info object for message
+ */
 function onVitalProp (message, rinfo){
     // one extra byte so assume length 20 rather than 19 for vitalcast
     for( var i = 2; i < r.size; i+=20) {
@@ -71,10 +87,17 @@ function onVitalProp (message, rinfo){
 
 };
 
+/**
+ * Process an ecg stream message
+ * @param message - message to parse
+ * @param rinfo - Info object for message
+ */
 function onEcgStream (message, rinfo){
-
+    // expand ip address from rinfo object
     ip = common.expandIPv6Address(rinfo.address);
-    console.log(message.toString('hex'));
+    // debug log
+    //console.log(message.toString('hex'));
+
     if(ip2id[ip]){
         // Send as hex string because otherwise certain bytes are
         //  replaced with 0xEFBFBD, which is unknown/unprintable character
@@ -90,6 +113,7 @@ RippleREST.socket.on( 'message', onMessage);
 socket.on( 'message', onMessage);
 
 function onMessage (message, r) {
+    // Parse header of message
     var header = message.slice(0,2);
     var dispatchByte = header.readUInt8(0);
     var version = (header.readUInt8(1) & 0xf0)>>>4;
@@ -116,6 +140,7 @@ function onMessage (message, r) {
     }
 };
 
+// Handle error on socket
 socket.on( 'error' , function(error){
 	console.log('Error, Socket Closing');
 	socket.close();
@@ -123,6 +148,7 @@ socket.on( 'error' , function(error){
     clearInterval(ping_interval);
 });
 
+// Event for socket to start listening
 socket.on( 'listening', function(){
 	var address = socket.address();
 	console.log('Listening: '+ address.address + address.port);
@@ -148,11 +174,19 @@ socket.on( 'listening', function(){
     ping_interval = setInterval(sendPing, ping_delay_ms);
 });
 
+/**
+ * Process an MQTT message
+ * @param topic - topic of the message
+ * @param message - message contents
+ */
 function onMqttMessage(topic, message){
-    console.log("Mqtt message with topic: " + topic);
-    console.log("Message: " + message);
-    var reg = new RegExp('P_Stats/.*/info');
-    if(reg.test(topic)){
+    //console.log("Mqtt message with topic: " + topic);
+    //console.log("Message: " + message);
+
+    var regInfoMsg = new RegExp('P_Stats/.*/info');
+    var regNoteMsg = new RegExp('P_Action/note/.*');
+
+    if(regInfoMsg.test(topic)){
         console.log('Info message.');
         try {
             var json = JSON.parse(message);
@@ -160,12 +194,18 @@ function onMqttMessage(topic, message){
         } catch(e){
             console.log(e);
         }
+    } else if (regNoteMsg.test(topic)) {
+        console.log('Note message');
+        // TODO: process note message
     } else {
         console.log('other message with topic: ' + topic);
         console.log(message);
     }
 }
 
+/**
+ * Send a ping message informing others of the cloudlet's location and current patients.
+ */
 function sendPing() {
     var date = new Date().toISOString();
     // build patient list
@@ -184,4 +224,5 @@ function sendPing() {
     mqtt_c.publish('C_Status/' + cloudlet_id + '/ping', JSON.stringify(msg));
 };
 
+// Bind socket
 socket.bind(udp_port);
