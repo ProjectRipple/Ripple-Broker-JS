@@ -33,22 +33,10 @@ RecordSchema.plugin(timestamps,{
 
 var Record = mongoose.model('Record', RecordSchema);
 
-// TODO: remove hardcoded IPs and IDs
+
 // need ID for ecg stream publish
-
 var ip2id = {
             };
-/*
-// shortened IPs to IDs to match the r.address string
-var ip2id = {
-            'aaaa::212:7404:4:404':'0012740400040404',
-            'aaaa::212:7403:3:303':'0012740300030303',
-            'aaaa::212:7402:2:202':'0012740200020202',
-            'aaaa::205:c2a:8c93:eea9':'00050c2a8c93eea9'
-            };
-*/
-
-// TODO: remove hardcoded IP addresses
 
 
 // http://forrst.com/posts/JS_Expand_Abbreviated_IPv6_Addresses-1OR
@@ -89,4 +77,3 @@ function expandIPv6Address(address)
 
 exports.ip2id 				= ip2id;
 exports.expandIPv6Address 	= expandIPv6Address;
-
